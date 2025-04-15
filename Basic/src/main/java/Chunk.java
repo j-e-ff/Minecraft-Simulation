@@ -52,8 +52,8 @@ public class Chunk {
     public void rebuildMesh(float startX, float startY, float startZ) {
         VBOColorHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
-        VBOTextureHandle = glGenBuffers(); // placed among the other VBOs
-        //the following among our other Float Buffers before our for loops
+        VBOTextureHandle = glGenBuffers(); 
+        
         FloatBuffer VertexTextureData =
                 BufferUtils.createFloatBuffer((CHUNK_SIZE
                         * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
