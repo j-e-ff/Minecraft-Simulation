@@ -29,19 +29,19 @@ import org.lwjgl.util.vector.Vector3f;
      private Vector3f lPosition = null;
      private float yaw = 0.0f;
      private float pitch = 0.0f;
-     private Chunk chunk;
+     private World world;
  
      //Constructor: Sets the position of the first person camera
      public FPCameraController(float x, float y, float z) {
          position = new Vector3f(x, y, z);
          lPosition = new Vector3f(x, y, z);
          lPosition.x = 0f;
-         lPosition.y = -45f;
-         lPosition.z = -10f;
+         lPosition.y = 15f;
+         lPosition.z = 0f;
      }
  
-     public void initializeChunk() {
-         chunk = new Chunk(0, 0, 0);
+     public void initializeWorld() {
+         world = new World();
      }
      
      //method: yaw
@@ -163,7 +163,7 @@ import org.lwjgl.util.vector.Vector3f;
              this.lookThrough();
              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
              glPushMatrix();
-             chunk.render();
+             world.render();
              glPopMatrix();
              Display.update();
              Display.sync(60);

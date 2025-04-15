@@ -22,7 +22,7 @@ import org.lwjgl.util.glu.GLU;
 //Contains all methods and constructors for Basic3D
 public class Basic3D {
     
-    private FPCameraController fp = new FPCameraController(0, 0, 0);
+    private FPCameraController fp = new FPCameraController(0, -55, -10);
     private DisplayMode displayMode;
 
     //method: start
@@ -31,7 +31,7 @@ public class Basic3D {
         try {
             createWindow();
             initGL();
-            fp.initializeChunk();
+            fp.initializeWorld();
             fp.gameLoop();
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,7 +52,7 @@ public class Basic3D {
             }
         }
         Display.setDisplayMode(displayMode);
-        Display.setTitle("Hey Mom! I am using OpenGL!!!");
+        Display.setTitle("Hey Professor! We totally didn't rip off Minecraft!!!");
         Display.create();
     }
 

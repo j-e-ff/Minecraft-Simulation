@@ -193,10 +193,11 @@ public class Chunk {
     }
     
     private float[] createCubeVertexCol(float[] CubeColorArray) {
+        int componentsPerColor = CubeColorArray.length;
         float[] cubeColors = new float[CubeColorArray.length * 4 * 6];
+
         for (int i = 0; i < cubeColors.length; i++) {
-            cubeColors[i] = CubeColorArray[i
-                    % CubeColorArray.length];
+            cubeColors[i] = CubeColorArray[i % CubeColorArray.length];
         }
         return cubeColors;
     }
@@ -239,20 +240,10 @@ public class Chunk {
     
     private float[] getCubeColor(Block block) {
         switch (block.GetID()) {
-            case 0: // Grass
-                return new float[]{0, 1, 0};
-            case 1: // Sand
-                return new float[]{1, 0.5f, 0};
             case 2: // Water
-                return new float[]{0, 0.5f, 1f, 0.5f};
-            case 3: // Dirt
-                return new float[]{0.5f, 0.35f, 0.05f};
-            case 4: // Stone
-                return new float[]{0.5f, 0.5f, 0.5f};
-            case 5: // Bedrock
-                return new float[]{0.3f, 0.3f, 0.3f};
-            default: // Air/default - make this more visible for debugging
-                return new float[]{1, 0, 1}; // Bright magenta for visibility
+                return new float[]{0.0f, 0.0f, 0.8f};
+            default:
+                return new float[]{1.0f, 1.0f, 1.0f};
         }
     }
 
@@ -266,37 +257,36 @@ public class Chunk {
         }
         r = new Random();
         Blocks = new Block[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+        int waterLevel = (int) (CHUNK_SIZE * 0.3);
         
         SimplexNoise noise = new SimplexNoise(CHUNK_SIZE, 0.35, r.nextInt());
         
         for (int x = 0; x < CHUNK_SIZE; x++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
-                // Use SimplexNoise to determine height at this x,z coordinate
-                // Scale the noise from [-1,1] to [0,CHUNK_SIZE*0.75]
+                // Generate terrain height using SimplexNoise
                 int height = (int) ((noise.getNoise(x, z) + 1) * CHUNK_SIZE * 0.375);
-                height = Math.max(1, Math.min(height, CHUNK_SIZE - 1)); // Clamp height
+                height = Math.max(1, Math.min(height, CHUNK_SIZE - 1));
 
                 for (int y = 0; y < CHUNK_SIZE; y++) {
-                    // Fill blocks based on height
                     if (y == 0) {
                         // Bottom layer is bedrock
                         Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Bedrock);
                         Blocks[x][y][z].SetActive(true);
-                    } else if (y <= height - 4) {
+                    } // If below water level but above terrain, it's water
+                    else if (y <= waterLevel && y > height) {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Water);
+                        Blocks[x][y][z].SetActive(true);
+                    } else if (y <= height - 4 && y > 0) {
                         // Deep underground = stone
                         Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Stone);
                         Blocks[x][y][z].SetActive(true);
-                    } else if (y <= height - 1) {
+                    } else if (y <= height - 1 && y > 0) {
                         // Just below surface = dirt
                         Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Dirt);
                         Blocks[x][y][z].SetActive(true);
                     } else if (y == height) {
                         // Surface layer = grass
                         Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Grass);
-                        Blocks[x][y][z].SetActive(true);
-                    } else if (y <= CHUNK_SIZE * 0.4 && y < height - 1) {
-                        // Water up to 40% of chunk height, and only below terrain
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Water);
                         Blocks[x][y][z].SetActive(true);
                     } else {
                         // Air above surface
@@ -341,70 +331,70 @@ public class Chunk {
             //Grass
             case 0:
                 return new float[]{
-                    // BOTTOM QUAD(DOWN=+Y)
+                    // TOP QUAD
+                    x + offset * 3, y + offset * 10, 
+                    x + offset * 2, y + offset * 10, 
+                    x + offset * 2, y + offset * 9,
+                    x + offset * 3, y + offset * 9,
+                    // BOTTOM QUAD 
                     x + offset * 3, y + offset * 1,
                     x + offset * 2, y + offset * 1,
                     x + offset * 2, y + offset * 0,
                     x + offset * 3, y + offset * 0,
-                    // TOP!
-                    x + offset * 3, y + offset * 10,
-                    x + offset * 2, y + offset * 10,
-                    x + offset * 2, y + offset * 9,
-                    x + offset * 3, y + offset * 9,
                     // FRONT QUAD
-                    x + offset * 4, y + offset * 1,
-                    x + offset * 3, y + offset * 1,
-                    x + offset * 3, y + offset * 0,
                     x + offset * 4, y + offset * 0,
+                    x + offset * 3, y + offset * 0,
+                    x + offset * 3, y + offset * 1,
+                    x + offset * 4, y + offset * 1,
                     // BACK QUAD
-                    x + offset * 4, y + offset * 1,
-                    x + offset * 3, y + offset * 1,
-                    x + offset * 3, y + offset * 0,
                     x + offset * 4, y + offset * 0,
-                    // LEFT QUAD
-                    x + offset * 4, y + offset * 1,
-                    x + offset * 3, y + offset * 1,
-                    x + offset * 3, y + offset * 0,
+                    x + offset * 3, y + offset * 0, 
+                    x + offset * 3, y + offset * 1, 
+                    x + offset * 4, y + offset * 1, 
+                    // LEFT QUAD 
                     x + offset * 4, y + offset * 0,
-                    // RIGHT QUAD
-                    x + offset * 4, y + offset * 1,
-                    x + offset * 3, y + offset * 1,
-                    x + offset * 3, y + offset * 0,
-                    x + offset * 4, y + offset * 0};
+                    x + offset * 3, y + offset * 0, 
+                    x + offset * 3, y + offset * 1, 
+                    x + offset * 4, y + offset * 1, 
+                    // RIGHT QUAD 
+                    x + offset * 4, y + offset * 0, 
+                    x + offset * 3, y + offset * 0, 
+                    x + offset * 3, y + offset * 1, 
+                    x + offset * 4, y + offset * 1};
                 
                 //Sand
                 case 1:
                 return new float[]{
                     // BOTTOM QUAD(DOWN=+Y)
-                    x + offset * 3, y + offset * 3,
-                    x + offset * 2, y + offset * 3,
-                    x + offset * 2, y + offset * 2,
                     x + offset * 3, y + offset * 2,
+                    x + offset * 2, y + offset * 2,
+                    x + offset * 2, y + offset * 1,
+                    x + offset * 3, y + offset * 1,
                     // TOP!
-                    x + offset * 3, y + offset * 3,
-                    x + offset * 2, y + offset * 3,
-                    x + offset * 2, y + offset * 2,
                     x + offset * 3, y + offset * 2,
+                    x + offset * 2, y + offset * 2,
+                    x + offset * 2, y + offset * 1,
+                    x + offset * 3, y + offset * 1,
                     // FRONT QUAD
-                    x + offset * 3, y + offset * 3,
-                    x + offset * 2, y + offset * 3,
-                    x + offset * 2, y + offset * 2,
                     x + offset * 3, y + offset * 2,
+                    x + offset * 2, y + offset * 2,
+                    x + offset * 2, y + offset * 1,
+                    x + offset * 3, y + offset * 1,
                     // BACK QUAD
-                    x + offset * 3, y + offset * 3,
-                    x + offset * 2, y + offset * 3,
-                    x + offset * 2, y + offset * 2,
                     x + offset * 3, y + offset * 2,
+                    x + offset * 2, y + offset * 2,
+                    x + offset * 2, y + offset * 1,
+                    x + offset * 3, y + offset * 1,
                     // LEFT QUAD
-                    x + offset * 3, y + offset * 3,
-                    x + offset * 2, y + offset * 3,
-                    x + offset * 2, y + offset * 2,
                     x + offset * 3, y + offset * 2,
-                    // RIGHT QUAD
-                    x + offset * 3, y + offset * 3,
-                    x + offset * 2, y + offset * 3,
                     x + offset * 2, y + offset * 2,
-                    x + offset * 3, y + offset * 2};
+                    x + offset * 2, y + offset * 1,
+                    x + offset * 3, y + offset * 1,
+                    // RIGHT QUAD
+                    x + offset * 3, y + offset * 2,
+                    x + offset * 2, y + offset * 2,
+                    x + offset * 2, y + offset * 1,
+                    x + offset * 3, y + offset * 1};
                 
                 //Water
                 case 2:
