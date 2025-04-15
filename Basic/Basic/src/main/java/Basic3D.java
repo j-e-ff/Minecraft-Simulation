@@ -59,7 +59,7 @@ public class Basic3D {
     //method: initGL
     //purpose: This method sets the background color of the window and sets it as a 3D space for the user to navigate
     private void initGL() {
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(135 / 255.0f, 206 / 255.0f, 235 / 255.0f, 1.0f);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         GLU.gluPerspective(100.0f, (float) displayMode.getWidth() / (float) displayMode.getHeight(), 0.1f, 300.0f);
@@ -71,6 +71,8 @@ public class Basic3D {
         glEnableClientState(GL_COLOR_ARRAY);
         glEnable(GL_TEXTURE_2D);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         /*
             glEnable(GL_LIGHTING);
             glEnable(GL_LIGHT0);

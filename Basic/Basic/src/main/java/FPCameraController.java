@@ -36,7 +36,7 @@ import org.lwjgl.util.vector.Vector3f;
          position = new Vector3f(x, y, z);
          lPosition = new Vector3f(x, y, z);
          lPosition.x = 0f;
-         lPosition.y = 35f;
+         lPosition.y = -45f;
          lPosition.z = -10f;
      }
  
@@ -119,6 +119,7 @@ import org.lwjgl.util.vector.Vector3f;
       * through the scene.
       */
      public void gameLoop() {
+         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
          float dx, dy, dt, lastTime = 0.0f;
          long time;
          float mouseSensitivity = 0.09f;

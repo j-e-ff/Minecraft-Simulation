@@ -33,21 +33,86 @@ public class Chunk {
     
     private int VBOTextureHandle;
     private Texture texture;
+    private FloatBuffer VertexPositionData;
+    private FloatBuffer VertexColorData;
+    private FloatBuffer VertexTextureData;
+    private int vertexCount = 0;
+    
+    private boolean isBlockTransparent(int x, int y, int z) {
+        if (x < 0 || y < 0 || z < 0 || x >= CHUNK_SIZE || y >= CHUNK_SIZE || z >= CHUNK_SIZE) {
+            return true;
+        }
+
+        int blockID = Blocks[x][y][z].GetID();
+        return blockID == Block.BlockType.BlockType_Default.GetID()
+                || blockID == Block.BlockType.BlockType_Water.GetID();
+    }
+
+    public float[] createVisibleFaces(float x, float y, float z, int bx, int by, int bz) {
+        int offset = CUBE_LENGTH / 2;
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(24 * 3); // Max 6 faces * 4 vertices * 3 coords
+
+        if (isBlockTransparent(bx, by + 1, bz)) {
+            buffer.put(new float[]{
+                x + offset, y + offset, z,
+                x - offset, y + offset, z,
+                x - offset, y + offset, z - CUBE_LENGTH,
+                x + offset, y + offset, z - CUBE_LENGTH
+            });
+        }
+
+        if (isBlockTransparent(bx, by - 1, bz)) {
+            buffer.put(new float[]{
+                x + offset, y - offset, z - CUBE_LENGTH,
+                x - offset, y - offset, z - CUBE_LENGTH,
+                x - offset, y - offset, z,
+                x + offset, y - offset, z
+            });
+        }
+
+        if (isBlockTransparent(bx, by, bz - 1)) {
+            buffer.put(new float[]{
+                x + offset, y + offset, z - CUBE_LENGTH,
+                x - offset, y + offset, z - CUBE_LENGTH,
+                x - offset, y - offset, z - CUBE_LENGTH,
+                x + offset, y - offset, z - CUBE_LENGTH
+            });
+        }
+
+        if (isBlockTransparent(bx, by, bz + 1)) {
+            buffer.put(new float[]{
+                x + offset, y - offset, z,
+                x - offset, y - offset, z,
+                x - offset, y + offset, z,
+                x + offset, y + offset, z
+            });
+        }
+
+        if (isBlockTransparent(bx - 1, by, bz)) {
+            buffer.put(new float[]{
+                x - offset, y + offset, z - CUBE_LENGTH,
+                x - offset, y + offset, z,
+                x - offset, y - offset, z,
+                x - offset, y - offset, z - CUBE_LENGTH
+            });
+        }
+
+        if (isBlockTransparent(bx + 1, by, bz)) {
+            buffer.put(new float[]{
+                x + offset, y + offset, z,
+                x + offset, y + offset, z - CUBE_LENGTH,
+                x + offset, y - offset, z - CUBE_LENGTH,
+                x + offset, y - offset, z
+            });
+        }
+
+        buffer.flip();
+        float[] result = new float[buffer.remaining()];
+        buffer.get(result);
+        return result;
+    }
     
     public void render() {
-        System.out.println("Rendering chunk...");
-        // Count active blocks
-        int activeBlocks = 0;
-        for (int x = 0; x < CHUNK_SIZE; x++) {
-            for (int y = 0; y < CHUNK_SIZE; y++) {
-                for (int z = 0; z < CHUNK_SIZE; z++) {
-                    if (Blocks[x][y][z].IsActive()) {
-                        activeBlocks++;
-                    }
-                }
-            }
-        }
-        System.out.println("Active blocks: " + activeBlocks);
         glPushMatrix();
         glBindBuffer(GL_ARRAY_BUFFER, VBOVertexHandle);
         glVertexPointer(3, GL_FLOAT, 0, 0L);
@@ -55,60 +120,76 @@ public class Chunk {
         glColorPointer(3, GL_FLOAT, 0, 0L);
         glBindBuffer(GL_ARRAY_BUFFER, VBOTextureHandle);
         glTexCoordPointer(2, GL_FLOAT, 0, 0L);
-
-        // Bind the actual texture instead of using a fixed ID
         glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
-
-        glDrawArrays(GL_QUADS, 0, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 24);
+        glDrawArrays(GL_QUADS, 0, vertexCount);
         glPopMatrix();
     }
     
     public void rebuildMesh(float startX, float startY, float startZ) {
-        VBOColorHandle = glGenBuffers();
-        VBOVertexHandle = glGenBuffers();
-        VBOTextureHandle = glGenBuffers(); // placed among the other VBOs
-        //the following among our other Float Buffers before our for loops
-        FloatBuffer VertexTextureData =
-                BufferUtils.createFloatBuffer((CHUNK_SIZE
-                        * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
 
-        FloatBuffer VertexPositionData = BufferUtils.createFloatBuffer(
-                (CHUNK_SIZE * CHUNK_SIZE *
-                CHUNK_SIZE) * 6 * 12);
-        FloatBuffer VertexColorData = BufferUtils.createFloatBuffer(
-                (CHUNK_SIZE* CHUNK_SIZE *
-                CHUNK_SIZE) * 6 * 12);
-        for (float x = 0; x < CHUNK_SIZE; x += 1) {
-            for (float z = 0; z < CHUNK_SIZE; z += 1) {
-                for(float y = 0; y < CHUNK_SIZE; y++){
-                    VertexPositionData.put(createCube((float) (startX + x
-                            * CUBE_LENGTH),
-                            (float)(y*CUBE_LENGTH+(int)(CHUNK_SIZE*.8)),
-                            (float) (startZ + z *CUBE_LENGTH)));
-                    VertexColorData.put(createCubeVertexCol(getCubeColor(
-                        Blocks[(int) x] [(int) y] [(int) z])));
-                    VertexTextureData.put(createTexCube(
-                            (float) 0, (float) 0, Blocks[(int) (x)]
-                                    [(int) (y)][(int) (z)]));
+        VertexPositionData = BufferUtils.createFloatBuffer(
+                (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
+        VertexColorData = BufferUtils.createFloatBuffer(
+                (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
+        VertexTextureData = BufferUtils.createFloatBuffer(
+                (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
+        int renderedFaces = 0;
+
+        for (int x = 0; x < CHUNK_SIZE; x++) {
+            for (int z = 0; z < CHUNK_SIZE; z++) {
+                for (int y = 0; y < CHUNK_SIZE; y++) {
+                    // Skip air blocks
+                    if (!Blocks[x][y][z].IsActive()
+                            || Blocks[x][y][z].GetID() == Block.BlockType.BlockType_Default.GetID()) {
+                        continue;
+                    }
+
+                    float[] blockVertices = createVisibleFaces(
+                            (float) (startX + x * CUBE_LENGTH),
+                            (float) (y * CUBE_LENGTH + (int) (CHUNK_SIZE * .8)),
+                            (float) (startZ + z * CUBE_LENGTH),
+                            x, y, z);
+
+                    if (blockVertices.length == 0) {
+                        continue;
+                    }
+
+                    int faces = blockVertices.length / (4 * 3);
+                    renderedFaces += faces;
+                    VertexPositionData.put(blockVertices);
+
+                    float[] cubeColors = createCubeVertexCol(getCubeColor(Blocks[x][y][z]));
+                    for (int i = 0; i < faces; i++) {
+                        for (int j = 0; j < 4; j++) {
+                            VertexColorData.put(cubeColors, 0, 3);
+                        }
+                    }
+
+                    float[] texCoords = createTexCube((float) 0, (float) 0, Blocks[x][y][z]);
+                    for (int i = 0; i < faces; i++) {
+                        VertexTextureData.put(texCoords, i * 8, 8);
+                    }
                 }
             }
         }
-        
+
         VertexColorData.flip();
-        VertexTextureData.flip();
         VertexPositionData.flip();
+        VertexTextureData.flip();
+
         glBindBuffer(GL_ARRAY_BUFFER, VBOVertexHandle);
         glBufferData(GL_ARRAY_BUFFER, VertexPositionData, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ARRAY_BUFFER,
-                VBOColorHandle);
-        glBufferData(GL_ARRAY_BUFFER,
-                VertexColorData,
-                GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, VBOTextureHandle);
-        glBufferData(GL_ARRAY_BUFFER, VertexTextureData,
-                GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBOColorHandle);
+        glBufferData(GL_ARRAY_BUFFER, VertexColorData, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBOTextureHandle);
+        glBufferData(GL_ARRAY_BUFFER, VertexTextureData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        vertexCount = VertexPositionData.capacity() / 3;
+
     }
     
     private float[] createCubeVertexCol(float[] CubeColorArray) {
@@ -163,7 +244,7 @@ public class Chunk {
             case 1: // Sand
                 return new float[]{1, 0.5f, 0};
             case 2: // Water
-                return new float[]{0, 0f, 1f};
+                return new float[]{0, 0.5f, 1f, 0.5f};
             case 3: // Dirt
                 return new float[]{0.5f, 0.35f, 0.05f};
             case 4: // Stone
@@ -185,34 +266,65 @@ public class Chunk {
         }
         r = new Random();
         Blocks = new Block[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+        
+        SimplexNoise noise = new SimplexNoise(CHUNK_SIZE, 0.35, r.nextInt());
+        
         for (int x = 0; x < CHUNK_SIZE; x++) {
-            for (int y = 0; y < CHUNK_SIZE; y++) {
-                for (int z = 0; z < CHUNK_SIZE; z++) {
-                    if (r.nextFloat() > 0.9f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Stone);
-                        Blocks[x][y][z].SetActive(true);
-                    } else if (r.nextFloat() > 0.7f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Grass);
-                        Blocks[x][y][z].SetActive(true);
-                    } else if (r.nextFloat() > 0.4f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Dirt);
-                        Blocks[x][y][z].SetActive(true);
-                    } else if (r.nextFloat() > 0.3f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Sand);
-                        Blocks[x][y][z].SetActive(true);
-                    } else if (r.nextFloat() > 0.2f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Water);
-                        Blocks[x][y][z].SetActive(true);
-                    } else if (r.nextFloat() > 0.5f) {
+            for (int z = 0; z < CHUNK_SIZE; z++) {
+                // Use SimplexNoise to determine height at this x,z coordinate
+                // Scale the noise from [-1,1] to [0,CHUNK_SIZE*0.75]
+                int height = (int) ((noise.getNoise(x, z) + 1) * CHUNK_SIZE * 0.375);
+                height = Math.max(1, Math.min(height, CHUNK_SIZE - 1)); // Clamp height
+
+                for (int y = 0; y < CHUNK_SIZE; y++) {
+                    // Fill blocks based on height
+                    if (y == 0) {
+                        // Bottom layer is bedrock
                         Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Bedrock);
                         Blocks[x][y][z].SetActive(true);
+                    } else if (y <= height - 4) {
+                        // Deep underground = stone
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Stone);
+                        Blocks[x][y][z].SetActive(true);
+                    } else if (y <= height - 1) {
+                        // Just below surface = dirt
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Dirt);
+                        Blocks[x][y][z].SetActive(true);
+                    } else if (y == height) {
+                        // Surface layer = grass
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Grass);
+                        Blocks[x][y][z].SetActive(true);
+                    } else if (y <= CHUNK_SIZE * 0.4 && y < height - 1) {
+                        // Water up to 40% of chunk height, and only below terrain
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Water);
+                        Blocks[x][y][z].SetActive(true);
                     } else {
+                        // Air above surface
                         Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Default);
+                        Blocks[x][y][z].SetActive(false);
+                    }
+                }
+            }
+        }
+        
+        for (int x = 0; x < CHUNK_SIZE; x++) {
+            for (int z = 0; z < CHUNK_SIZE; z++) {
+                for (int y = 0; y < CHUNK_SIZE; y++) {
+                    // Skip air blocks and bedrock
+                    if (Blocks[x][y][z].GetID() == Block.BlockType.BlockType_Default.GetID()
+                            || Blocks[x][y][z].GetID() == Block.BlockType.BlockType_Bedrock.GetID()) {
+                        continue;
+                    }
+
+                    // Small chance to convert surface dirt to sand
+                    if (Blocks[x][y][z].GetID() == Block.BlockType.BlockType_Grass.GetID() && r.nextFloat() < 0.1f) {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_Sand);
                         Blocks[x][y][z].SetActive(true);
                     }
                 }
             }
         }
+
         VBOColorHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
         VBOTextureHandle = glGenBuffers();
