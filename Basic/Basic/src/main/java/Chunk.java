@@ -9,7 +9,7 @@ package main.java;
  * date last modified: 4/15/2025
  *
  * purpose: This code creates the framework for generating chunks in our 
- * Minecraft world. It uses matrixes and VBOs to handle generation. 
+ *          Minecraft world. It uses matrices and VBOs to handle generation. 
  ****************************************************************/ 
 import java.nio.FloatBuffer;
 import java.util.Random;
@@ -19,7 +19,8 @@ import static org.lwjgl.opengl.GL15.*;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
-
+//method: Chunk
+//purpose: This class groups the blocks together based one the CHUNK_SIZE
 public class Chunk {
     static final int CHUNK_SIZE = 30;
     static final int CUBE_LENGTH = 2;
@@ -37,7 +38,10 @@ public class Chunk {
     private FloatBuffer VertexColorData;
     private FloatBuffer VertexTextureData;
     private int vertexCount = 0;
-    
+    //method: isBlockTransparent
+    /*purpose: This method returns a boolean value depending on if the block 
+    *          specified is transparent (in the air)
+    */
     private boolean isBlockTransparent(int x, int y, int z) {
         if (x < 0 || y < 0 || z < 0 || x >= CHUNK_SIZE || y >= CHUNK_SIZE || z >= CHUNK_SIZE) {
             return true;
@@ -47,7 +51,10 @@ public class Chunk {
         return blockID == Block.BlockType.BlockType_Default.GetID()
                 || blockID == Block.BlockType.BlockType_Water.GetID();
     }
-
+    //method: createVisibleFaces
+    /*purpose: This method will create a vertex of the coordinates of visible 
+    *          faces of a single block
+    */
     public float[] createVisibleFaces(float x, float y, float z, int bx, int by, int bz) {
         int offset = CUBE_LENGTH / 2;
         FloatBuffer buffer = BufferUtils.createFloatBuffer(24 * 3); // Max 6 faces * 4 vertices * 3 coords
@@ -111,7 +118,8 @@ public class Chunk {
         buffer.get(result);
         return result;
     }
-    
+    //method: render
+    //purpose: this method will draw the chunks
     public void render() {
         glPushMatrix();
         glBindBuffer(GL_ARRAY_BUFFER, VBOVertexHandle);
@@ -124,7 +132,11 @@ public class Chunk {
         glDrawArrays(GL_QUADS, 0, vertexCount);
         glPopMatrix();
     }
-    
+    //mehtod: rebuildMesh 
+    /*purpose: This method prepares the chunks 3D mesh based ont eh current 
+    *        block layout. It calculates which block faces are visbile
+    *        builds vertex/texture/color of those faces and sends it to the VBO
+    */
     public void rebuildMesh(float startX, float startY, float startZ) {
 
         VertexPositionData = BufferUtils.createFloatBuffer(
@@ -191,7 +203,8 @@ public class Chunk {
         vertexCount = VertexPositionData.capacity() / 3;
 
     }
-    
+    //method: createCubeVertexCol
+    //purpose: This method will give the cubes color. 
     private float[] createCubeVertexCol(float[] CubeColorArray) {
         int componentsPerColor = CubeColorArray.length;
         float[] cubeColors = new float[CubeColorArray.length * 4 * 6];
@@ -201,7 +214,10 @@ public class Chunk {
         }
         return cubeColors;
     }
-
+    //method: createCube
+    /*purpose: this method creates the cube by calculating and returning the 
+    position of all 24 vertices
+    */
     public static float[] createCube(float x, float y,
             float z) {
         int offset = CUBE_LENGTH / 2;
@@ -237,7 +253,10 @@ public class Chunk {
             x + offset, y - offset, z - CUBE_LENGTH,
             x + offset, y - offset, z};
     }
-    
+    //method: getCubeColor
+    /*purpose: this method will returnt he color of the cube. Has a special case
+    *         with water
+    */
     private float[] getCubeColor(Block block) {
         switch (block.GetID()) {
             case 2: // Water
@@ -246,7 +265,11 @@ public class Chunk {
                 return new float[]{1.0f, 1.0f, 1.0f};
         }
     }
-
+    //mehtod: Chunk
+    /*purpose: this method will generate and initialize all blocks in a 3D grid
+    *          It also assigns types (grass,stone,water) and loads textures
+    *          and prepares the mesh
+    */
     public Chunk(int startX, int startY, int startZ) {
         try {
             texture = TextureLoader.getTexture("PNG",
@@ -323,7 +346,10 @@ public class Chunk {
         StartZ = startZ;
         rebuildMesh(startX, startY, startZ);
     }
-    
+    //method: createTextCube
+    /* purpose: This method calculates and returns the UV texture coordinates
+    *         for each face of the cube
+    */
     public static float[] createTexCube(float x, float y, Block block) {
         float offset = (1024f / 16) / 1024f;
         switch (block.GetID()) {
