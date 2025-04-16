@@ -17,7 +17,10 @@ public class Block {
     private boolean IsActive;
     private BlockType Type;
     private float x,y,z;
-    
+    //enum: Block
+    /*purpose: This enum creates the block and holds the BlockID, as well as 
+    *         get/set for the ID
+    */
     public enum BlockType {
         BlockType_Grass(0),
         BlockType_Sand(1),
@@ -41,25 +44,31 @@ public class Block {
             BlockID = i;
         }
     }
-    
+    //method: Block
+    //purpose: This method keeps track of the Block type 
     public Block(BlockType type) {
         Type = type;
     }
-    
+    //method: setCoords
+    //purpose: This method sets the coordinates for the block
     public void setCoords(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
     }
-    
+    //method: IsActive
+    //purpose: This is a boolean method that will return the state of the block
+    //         True for active and False for inactive
     public boolean IsActive() {
         return IsActive;
     }
-    
+    //method: SetActive
+    //purpose: This method is used to set the status of the block to active
     public void SetActive(boolean active) {
         IsActive = active;
     }
-    
+    //method: GetID
+    //purpose: This method is used to get the ID of the block
     public int GetID() {
         return Type.GetID();
     }
