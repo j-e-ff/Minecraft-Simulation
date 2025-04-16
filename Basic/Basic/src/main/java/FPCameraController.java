@@ -39,7 +39,8 @@ import org.lwjgl.util.vector.Vector3f;
          lPosition.y = 15f;
          lPosition.z = 0f;
      }
- 
+     //method: inizilaizeWorld
+     //purpose: this method initializes our Minecraft world
      public void initializeWorld() {
          world = new World();
      }
