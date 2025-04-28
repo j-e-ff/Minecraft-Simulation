@@ -16,14 +16,7 @@ public class World {
     private static final int WORLD_SIZE = 5; // 5x5 chunks = 150x150 if chunk size is 30
     private Chunk[][] chunks; // 2d arraystores all chunks in world
 
-    //method: getWorldSize
-    //purpose: retrieve private value WORLD_SIZE
-    public static float getWorldSize() {
-        return WORLD_SIZE;
-    }
-    
-    //method: World
-    //purpose: This method handles the generation of chunks in a world and where to place each chunk in the world
+    //Constructor: Creates the world and sets location of all chunks to generate
     public World() {
         chunks = new Chunk[WORLD_SIZE][WORLD_SIZE];
         for (int x = 0; x < WORLD_SIZE; x++) { // for loop iterates through creation of each chunk's position in world

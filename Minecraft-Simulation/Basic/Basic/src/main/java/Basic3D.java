@@ -18,35 +18,12 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.util.glu.GLU;
-import java.nio.FloatBuffer;
-import org.lwjgl.BufferUtils;
 
 //Contains all methods and constructors for Basic3D
 public class Basic3D {
     
     private FPCameraController fp = new FPCameraController(0, -55, -10);
     private DisplayMode displayMode;
-
-    private FloatBuffer lightPosition; //declare buffer light position
-    private FloatBuffer whiteLight; //declare buffer for lighting
-    
-    //method: initLightArrays
-    //purpose: initializes lighting related buffers
-    private void initLightArrays() {
-        
-        float WORLD_SIZE = World.getWorldSize(); //stores world size
-        float CHUNK_SIZE = Chunk.CHUNK_SIZE; //stores chunk size
-        
-        lightPosition = BufferUtils.createFloatBuffer(4); //sets buffer's capacity to 4
-        lightPosition.put((CHUNK_SIZE*WORLD_SIZE)).put(0.0f).put(CHUNK_SIZE*WORLD_SIZE).put(1.0f).flip();
-            //assigns coordinates to buffer:
-            //1/2 world's length in x direction
-            //1/2 world's length in z direction
-            //0 in y direction        
-        
-        whiteLight = BufferUtils.createFloatBuffer(4); //sets buffer's capacity to 4
-        whiteLight.put(1.0f).put(1.0f).put(1.0f).put(0.0f).flip(); //assigns white light values to buffer
-    }
 
     //method: start
     //purpose: This method controls the initialization of the OpenGL window and begins the game loop
@@ -104,13 +81,6 @@ public class Basic3D {
             float[] lightDiffuse = {1.0f, 1.0f, 1.0f, 1.0f}; // White light
             glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
         */
-        initLightArrays(); //initializes lighting and position buffers
-        glLight(GL_LIGHT0, GL_POSITION, lightPosition); // sets light position according to the position buffer
-        glLight(GL_LIGHT0, GL_SPECULAR, whiteLight); // sets specular according to lighting buffer
-        glLight(GL_LIGHT0, GL_DIFFUSE, whiteLight); // sets diffuse light according to buffer
-        glLight(GL_LIGHT0, GL_AMBIENT, whiteLight); //sets ambient lgiht according to lighting buffer
-        glEnable(GL_LIGHTING); ///enables lighting
-        glEnable(GL_LIGHT0); //enables light0
     }
 
     //method: main
