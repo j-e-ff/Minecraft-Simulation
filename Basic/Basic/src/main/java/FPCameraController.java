@@ -22,6 +22,8 @@ import org.lwjgl.util.vector.Vector3f;
  import org.lwjgl.opengl.Display;
  import static org.lwjgl.opengl.GL11.*;
  import org.lwjgl.Sys;
+import java.nio.FloatBuffer;
+import org.lwjgl.BufferUtils;
  
  //Overall class for the code
  public class FPCameraController {
@@ -111,6 +113,16 @@ import org.lwjgl.util.vector.Vector3f;
          glRotatef(pitch, 1.0f, 0.0f, 0.0f);
          glRotatef(yaw, 0.0f, 1.0f, 0.0f);
          glTranslatef(position.x, position.y, position.z);
+
+         float WORLD_SIZE = World.getWorldSize(); //stores world size
+         float CHUNK_SIZE = Chunk.CHUNK_SIZE; //stores chunck size
+
+         FloatBuffer lightPosition = BufferUtils.createFloatBuffer(4); //buffer to store x, y, z, w coordinates
+         lightPosition.put((CHUNK_SIZE*WORLD_SIZE)).put(0.0f).put(CHUNK_SIZE*WORLD_SIZE).put(1.0f).flip();//assigns coordinates to buffer
+            //1/2 world's length in x direction
+            //1/2 world's length in z direction
+            //no change in y direction
+         glLight(GL_LIGHT0, GL_POSITION, lightPosition); // assigns position to light source (according to buffer)
      }
  
      //method: gameLoop
